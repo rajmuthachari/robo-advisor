@@ -1,0 +1,41 @@
+{
+  "id": "mean_variance",
+  "name": "Mean-Variance Optimization",
+  "description": "Portfolio optimization using mean-variance approach with utility maximization",
+  "min_allocation_threshold": 0.01,
+  "constraints": {
+    "max_allocation_per_asset": 0.5,
+    "min_equity_allocation": {
+      "Very Conservative": 0.1,
+      "Conservative": 0.2,
+      "Moderate": 0.3,
+      "Growth-Oriented": 0.5,
+      "Aggressive": 0.7
+    },
+    "max_equity_allocation": {
+      "Very Conservative": 0.3,
+      "Conservative": 0.5,
+      "Moderate": 0.7,
+      "Growth-Oriented": 0.85,
+      "Aggressive": 0.95
+    }
+  },
+  "asset_categories": {
+    "equity": [
+      "Equity - Singapore",
+      "Equity - Technology",
+      "Equity - ESG"
+    ],
+    "fixed_income": [
+      "Fixed Income - Singapore",
+      "Fixed Income - International"
+    ],
+    "real_estate": [
+      "Real Estate"
+    ],
+    "alternative": []
+  },
+  "risk_free_rate": 0.03,
+  "optimization_method": "SLSQP",
+  "rebalancing_frequency": "quarterly"
+}

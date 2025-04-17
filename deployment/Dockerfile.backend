@@ -1,0 +1,27 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy requirements.txt first for better caching
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the backend code and configuration
+COPY backend/ ./backend/
+COPY config/ ./config/
+
+# Create data directories
+RUN mkdir -p data/cache data/backup
+
+# Set environment variables
+ENV FLASK_APP=backend/api/routes.py
+ENV FLASK_ENV=production
+ENV PYTHONPATH=/app
+
+# Expose the port the app runs on
+EXPOSE 5000
+
+# Command to run the application
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "backend.api.routes:create_app()"]

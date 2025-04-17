@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.backend
+    container_name: robo-advisor-backend
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_APP=backend/api/routes.py
+      - FLASK_ENV=production
+      - PYTHONPATH=/app
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.frontend
+    container_name: robo-advisor-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  data:
+    driver: local

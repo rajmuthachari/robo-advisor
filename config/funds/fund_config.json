@@ -1,0 +1,76 @@
+{
+  "cache_dir": "data/cache",
+  "cache_expiry_days": 7,
+  "funds": [
+    {
+      "name": "SPDR Straits Times Index ETF",
+      "ticker": "ES3.SI",
+      "description": "Tracks the performance of the Straits Times Index, a market capitalization weighted index that tracks the performance of the top 30 companies listed on the Singapore Exchange.",
+      "category": "Equity - Singapore",
+      "backup_file": "data/backup/ES3_SI.csv"
+    },
+    {
+      "name": "Nikko AM Singapore STI ETF",
+      "ticker": "G3B.SI",
+      "description": "Seeks to replicate the performance of the Straits Times Index, providing investors with access to the Singapore equity market.",
+      "category": "Equity - Singapore",
+      "backup_file": "data/backup/G3B_SI.csv"
+    },
+    {
+      "name": "Lion-OCBC Securities Singapore Low Carbon ETF",
+      "ticker": "ESU.SI",
+      "description": "Provides exposure to Singapore companies with reduced carbon footprint, allowing investors to align with sustainable investment goals.",
+      "category": "Equity - ESG",
+      "backup_file": "data/backup/ESU_SI.csv"
+    },
+    {
+      "name": "Lion-Phillip S-REIT ETF",
+      "ticker": "CLR.SI",
+      "description": "Focuses on Singapore REITs, providing investors with exposure to the real estate market and typically generating higher yields.",
+      "category": "Real Estate",
+      "backup_file": "data/backup/CLR_SI.csv"
+    },
+    {
+      "name": "NikkoAM-StraitsTrading Asia ex Japan REIT ETF",
+      "ticker": "CFA.SI",
+      "description": "Provides diversified exposure to REITs across Asia (excluding Japan), focusing on property income and capital appreciation.",
+      "category": "Real Estate",
+      "backup_file": "data/backup/CFA_SI.csv"
+    },
+    {
+      "name": "CapitaLand Integrated Commercial Trust",
+      "ticker": "C38U.SI",
+      "description": "One of the largest REITs in Singapore focusing on integrated developments including shopping malls and commercial properties.",
+      "category": "Real Estate",
+      "backup_file": "data/backup/C38U_SI.csv"
+    },
+    {
+      "name": "Mapletree Industrial Trust",
+      "ticker": "ME8U.SI",
+      "description": "A REIT investing in industrial properties and data centers in Singapore and North America.",
+      "category": "Real Estate",
+      "backup_file": "data/backup/ME8U_SI.csv"
+    },
+    {
+      "name": "ABF Singapore Bond Index Fund",
+      "ticker": "A35.SI",
+      "description": "Invests in Singapore government and quasi-government bonds, providing fixed income exposure with lower risk.",
+      "category": "Fixed Income - Singapore",
+      "backup_file": "data/backup/A35_SI.csv"
+    },
+    {
+      "name": "NikkoAM-ICBCChina Bond ETF SGD",
+      "ticker": "ZHY.SI",
+      "description": "Provides exposure to Chinese government and policy bank bonds, offering diversification benefits.",
+      "category": "Fixed Income - International",
+      "backup_file": "data/backup/ZHY_SI.csv"
+    },
+    {
+      "name": "Lion-OCBC Securities Hang Seng TECH ETF",
+      "ticker": "HST.SI",
+      "description": "Tracks the Hang Seng TECH Index, providing exposure to the 30 largest technology companies listed in Hong Kong.",
+      "category": "Equity - Technology",
+      "backup_file": "data/backup/HST_SI.csv"
+    }
+  ]
+}

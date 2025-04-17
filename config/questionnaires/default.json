@@ -1,0 +1,139 @@
+{
+  "id": "default_questionnaire",
+  "title": "Investment Risk Assessment",
+  "description": "This questionnaire will help us understand your investment goals and risk tolerance to create a personalized portfolio recommendation.",
+  "sections": [
+    {
+      "id": "goals",
+      "title": "Financial Goals & Time Horizon",
+      "description": "Understanding your investment goals and timeline helps us match your portfolio to your needs.",
+      "weight": 1.2
+    },
+    {
+      "id": "situation",
+      "title": "Financial Situation",
+      "description": "Your current financial position affects how much risk is appropriate for you.",
+      "weight": 1.0
+    },
+    {
+      "id": "capacity",
+      "title": "Risk Capacity",
+      "description": "This measures your ability to withstand market fluctuations and potential losses.",
+      "weight": 1.5
+    },
+    {
+      "id": "attitude",
+      "title": "Risk Attitude",
+      "description": "Your personal comfort level with investment risk and market volatility.",
+      "weight": 1.8
+    },
+    {
+      "id": "experience",
+      "title": "Investment Experience & Preferences",
+      "description": "Your familiarity with different investment types and management style.",
+      "weight": 1.0
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "text": "What is your primary investment objective?",
+      "options": [
+        {"text": "Preserve my capital", "score": 1},
+        {"text": "Grow my capital steadily over time", "score": 2},
+        {"text": "Maximize long-term returns, accepting short-term risk", "score": 3}
+      ],
+      "section": "goals"
+    },
+    {
+      "id": "q2",
+      "text": "When do you expect to start withdrawing a significant portion of this investment?",
+      "options": [
+        {"text": "Within 3 years", "score": 1},
+        {"text": "Between 3 and 7 years", "score": 2},
+        {"text": "After 7 years", "score": 3}
+      ],
+      "section": "goals"
+    },
+    {
+      "id": "q3",
+      "text": "How would you describe your household income stability?",
+      "options": [
+        {"text": "Unstable or fluctuating", "score": 1},
+        {"text": "Mostly stable", "score": 2},
+        {"text": "Very stable and predictable", "score": 3}
+      ],
+      "section": "situation"
+    },
+    {
+      "id": "q4",
+      "text": "Do you have a financial safety net (e.g., emergency fund, insurance)?",
+      "options": [
+        {"text": "Not at all", "score": 1},
+        {"text": "Partially", "score": 2},
+        {"text": "Fully covered", "score": 3}
+      ],
+      "section": "situation"
+    },
+    {
+      "id": "q5",
+      "text": "How would you react if your portfolio lost 15% in six months?",
+      "options": [
+        {"text": "Sell immediately to avoid further losses", "score": 1},
+        {"text": "Hold and wait for recovery", "score": 2},
+        {"text": "Buy more to take advantage of lower prices", "score": 3}
+      ],
+      "section": "capacity"
+    },
+    {
+      "id": "q6",
+      "text": "What is the maximum annual loss you could tolerate without changing your investment plan?",
+      "options": [
+        {"text": "10% or less", "score": 1},
+        {"text": "Around 25%", "score": 2},
+        {"text": "40% or more", "score": 3}
+      ],
+      "section": "capacity"
+    },
+    {
+      "id": "q7",
+      "text": "When markets are volatile, what is your typical reaction?",
+      "options": [
+        {"text": "I panic and withdraw funds", "score": 1},
+        {"text": "I monitor closely but avoid changing plans", "score": 2},
+        {"text": "I stay calm or see it as an opportunity", "score": 3}
+      ],
+      "section": "attitude"
+    },
+    {
+      "id": "q8",
+      "text": "How do you feel about investment risk?",
+      "options": [
+        {"text": "I avoid it as much as possible", "score": 1},
+        {"text": "I can handle some risk for moderate returns", "score": 2},
+        {"text": "I am comfortable with high risk for high potential returns", "score": 3}
+      ],
+      "section": "attitude"
+    },
+    {
+      "id": "q9",
+      "text": "Which investments have you used before?",
+      "options": [
+        {"text": "Only savings, fixed deposits, or insurance", "score": 1},
+        {"text": "Bonds, balanced funds, or REITs", "score": 2},
+        {"text": "Stocks, ETFs, crypto, or derivatives", "score": 3}
+      ],
+      "section": "experience"
+    },
+    {
+      "id": "q10",
+      "text": "How actively do you manage your investments?",
+      "options": [
+        {"text": "I rarely review or adjust them", "score": 1},
+        {"text": "I occasionally monitor and rebalance", "score": 2},
+        {"text": "I actively manage and adjust strategies", "score": 3}
+      ],
+      "section": "experience"
+    }
+  ]
+}

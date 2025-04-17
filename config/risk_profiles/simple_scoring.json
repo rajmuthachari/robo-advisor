@@ -1,0 +1,42 @@
+{
+  "id": "simple_scoring",
+  "name": "Simple Score-Based Risk Assessment",
+  "description": "Classifies risk profiles based on simple score thresholds",
+  "profiles": [
+    {
+      "name": "Very Conservative",
+      "description": "Focus on preserving capital with minimal risk. Suited for short-term goals or those with low risk tolerance.",
+      "min_score": 10,
+      "max_score": 16,
+      "risk_aversion": 12.0
+    },
+    {
+      "name": "Conservative",
+      "description": "Emphasis on stability with modest growth potential. Appropriate for short to medium-term goals.",
+      "min_score": 17,
+      "max_score": 20,
+      "risk_aversion": 6.0
+    },
+    {
+      "name": "Moderate",
+      "description": "Balanced approach with moderate growth potential and moderate risk.",
+      "min_score": 21,
+      "max_score": 24,
+      "risk_aversion": 3.5
+    },
+    {
+      "name": "Growth-Oriented",
+      "description": "Focus on long-term growth with higher risk tolerance. Suitable for longer time horizons.",
+      "min_score": 25,
+      "max_score": 27,
+      "risk_aversion": 2.5
+    },
+    {
+      "name": "Aggressive",
+      "description": "Maximizing growth potential with high risk tolerance. Best for long-term goals and those comfortable with volatility.",
+      "min_score": 28,
+      "max_score": 30,
+      "risk_aversion": 1.5
+    }
+  ]
+}
