@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Box, 
   Typography, 
@@ -33,9 +34,24 @@ import {
   AccountBalance,
   ShowChart,
   Psychology,
-  Assessment
+  Assessment,
+  Functions
 } from '@mui/icons-material';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  Legend, 
+  Tooltip as RechartsTooltip,
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Line,
+  LineChart
+} from 'recharts';
 
 // Styled components
 const ResultsContainer = styled(Container)(({ theme }) => ({
@@ -110,10 +126,123 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'
 // PortfolioResults component
 const PortfolioResults = ({ results, onReset }) => {
   const [tabValue, setTabValue] = useState(0);
+  
+  // State for efficient frontier visualization
+  const [efficientFrontierData, setEfficientFrontierData] = useState(null);
+  const [efficientFrontierPoints, setEfficientFrontierPoints] = useState([]);
+  const [capitalMarketLinePoints, setCapitalMarketLinePoints] = useState([]);
+  const [fundPoints, setFundPoints] = useState([]);
+  const [gmvpPoint, setGmvpPoint] = useState(null);
+  const [marketPortfolioPoint, setMarketPortfolioPoint] = useState(null);
+  const [yourPortfolioPoint, setYourPortfolioPoint] = useState(null);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
+
+  // Fetch efficient frontier data
+  useEffect(() => {
+    const fetchEfficientFrontier = async () => {
+      try {
+        // In production, uncomment this:
+        // const response = await axios.get(`${process.env.REACT_APP_API_URL}/efficient-frontier`);
+        // setEfficientFrontierData(response.data);
+        
+        // For testing, use mock data
+        const mockData = {
+          "gmvp_with_short": {
+            "return": 0.042,
+            "volatility": 0.023,
+            "weights": {
+              "SPDR Straits Times Index ETF": 0.06,
+              "Nikko AM Singapore STI ETF": -0.01,
+              "NikkoAM-ICBCChina Bond ETF SGD": 0.75
+            }
+          },
+          "gmvp_no_short": {
+            "return": 0.043,
+            "volatility": 0.023,
+            "weights": {
+              "SPDR Straits Times Index ETF": 0.04,
+              "ABF Singapore Bond Index Fund": 0.20,
+              "NikkoAM-ICBCChina Bond ETF SGD": 0.76
+            }
+          },
+          "market_portfolio_with_short": {
+            "return": 0.175,
+            "volatility": 0.077,
+            "sharpe_ratio": 1.88,
+            "weights": {
+              "SPDR Straits Times Index ETF": 0.38,
+              "Nikko AM Singapore STI ETF": 0.23,
+              "NikkoAM-ICBCChina Bond ETF SGD": 0.73
+            }
+          },
+          "market_portfolio_no_short": {
+            "return": 0.066,
+            "volatility": 0.038,
+            "sharpe_ratio": 0.93,
+            "weights": {
+              "SPDR Straits Times Index ETF": 0.22,
+              "Nikko AM Singapore STI ETF": 0.09,
+              "NikkoAM-ICBCChina Bond ETF SGD": 0.67
+            }
+          }
+        };
+        
+        setEfficientFrontierData(mockData);
+        
+        // Generate sample data for visualization
+        // Efficient frontier curve
+        const efPoints = [];
+        for (let i = 0; i <= 10; i++) {
+          const vol = 0.02 + (i * 0.015);
+          const ret = 0.03 + (vol * 1.5) + (i * 0.005);
+          efPoints.push({ volatility: vol, return: ret });
+        }
+        setEfficientFrontierPoints(efPoints);
+        
+        // Capital market line
+        const cmlPoints = [];
+        for (let vol = 0; vol <= 0.15; vol += 0.01) {
+          const ret = 0.03 + (vol * 1.5);
+          cmlPoints.push({ volatility: vol, return: ret });
+        }
+        setCapitalMarketLinePoints(cmlPoints);
+        
+        // Individual fund points
+        const funds = [
+          { name: "SPDR Straits Times Index ETF", volatility: 0.10, return: 0.12 },
+          { name: "Nikko AM Singapore STI ETF", volatility: 0.11, return: 0.12 },
+          { name: "Lion-OCBC Securities Singapore Low Carbon ETF", volatility: 0.22, return: 0.02 },
+          { name: "Lion-Phillip S-REIT ETF", volatility: 0.14, return: -0.04 },
+          { name: "NikkoAM-StraitsTrading Asia ex Japan REIT ETF", volatility: 0.12, return: -0.05 },
+          { name: "CapitaLand Integrated Commercial Trust", volatility: 0.19, return: 0.04 },
+          { name: "Mapletree Industrial Trust", volatility: 0.17, return: 0.00 },
+          { name: "ABF Singapore Bond Index Fund", volatility: 0.05, return: 0.03 },
+          { name: "NikkoAM-ICBCChina Bond ETF SGD", volatility: 0.03, return: 0.04 },
+          { name: "Lion-OCBC Securities Hang Seng TECH ETF", volatility: 0.37, return: 0.19 }
+        ];
+        setFundPoints(funds);
+        
+        // Special portfolio points
+        setGmvpPoint({ volatility: mockData.gmvp_no_short.volatility, return: mockData.gmvp_no_short.return });
+        setMarketPortfolioPoint({ volatility: mockData.market_portfolio_no_short.volatility, return: mockData.market_portfolio_no_short.return });
+        
+        // Your portfolio point - based on results prop
+        if (results && results.portfolio) {
+          setYourPortfolioPoint({ 
+            volatility: results.portfolio.volatility, 
+            return: results.portfolio.return 
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching efficient frontier:', error);
+      }
+    };
+    
+    fetchEfficientFrontier();
+  }, [results]);
 
   // Format portfolio data for chart
   const formatPortfolioData = () => {
@@ -364,6 +493,7 @@ const PortfolioResults = ({ results, onReset }) => {
           <Tab icon={<ShowChart />} label="Performance" />
           <Tab icon={<Psychology />} label="Risk Profile" />
           <Tab icon={<Assessment />} label="Recommendations" />
+          <Tab icon={<Functions />} label="Methodology" />
         </Tabs>
         
         <Divider sx={{ mb: 3 }} />
@@ -441,15 +571,119 @@ const PortfolioResults = ({ results, onReset }) => {
           </Grid>
         )}
         
-        {/* Performance Tab */}
+        {/* Performance Tab with Efficient Frontier */}
         {tabValue === 1 && (
           <Box sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Historical and Projected Performance
+              Efficient Frontier Analysis
             </Typography>
             <Typography variant="body1" paragraph>
-              This section would include historical performance charts and projected future performance
-              based on different market scenarios. Implementation would depend on available data.
+              The chart below shows the efficient frontier, your portfolio, and key reference points.
+            </Typography>
+            
+            <Box sx={{ height: 500, mt: 4 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    type="number" 
+                    dataKey="volatility" 
+                    name="Risk (Volatility)" 
+                    domain={[0, 0.4]}
+                    label={{ value: 'Risk (Volatility)', position: 'bottom', offset: 20 }}
+                    tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                  />
+                  <YAxis 
+                    type="number" 
+                    dataKey="return" 
+                    name="Expected Return"
+                    domain={[-0.10, 0.20]}
+                    label={{ value: 'Expected Return', angle: -90, position: 'insideLeft', offset: -40 }}
+                    tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                  />
+                  <RechartsTooltip 
+                    formatter={(value, name) => [`${(value * 100).toFixed(2)}%`, name]}
+                    labelFormatter={() => ''}
+                  />
+                  <Legend />
+                  
+                  {/* Capital Market Line */}
+                  <Line 
+                    name="Capital Market Line" 
+                    data={capitalMarketLinePoints} 
+                    type="monotone"
+                    dataKey="return"
+                    stroke="#ff7300" 
+                    strokeDasharray="5 5"
+                    dot={false}
+                    activeDot={false}
+                    isAnimationActive={false}
+                  />
+                  
+                  {/* Efficient Frontier Curve */}
+                  <Line 
+                    name="Efficient Frontier" 
+                    data={efficientFrontierPoints} 
+                    type="monotone"
+                    dataKey="return"
+                    stroke="#8884d8" 
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={false}
+                    isAnimationActive={false}
+                  />
+                  
+                  {/* Individual Funds */}
+                  <Scatter 
+                    name="Individual Funds" 
+                    data={fundPoints} 
+                    fill="#8884d8"
+                  />
+                  
+                  {/* Global Minimum Variance Portfolio */}
+                  {gmvpPoint && (
+                    <Scatter 
+                      name="Minimum Risk Portfolio" 
+                      data={[gmvpPoint]} 
+                      fill="#ff0000"
+                      shape="star"
+                    >
+                      {/* Make the point larger */}
+                      {<cell width={20} height={20} />}
+                    </Scatter>
+                  )}
+                  
+                  {/* Market Portfolio */}
+                  {marketPortfolioPoint && (
+                    <Scatter 
+                      name="Market Portfolio" 
+                      data={[marketPortfolioPoint]} 
+                      fill="#00ff00"
+                      shape="diamond"
+                    >
+                      {/* Make the point larger */}
+                      {<cell width={20} height={20} />}
+                    </Scatter>
+                  )}
+                  
+                  {/* Your Portfolio */}
+                  {yourPortfolioPoint && (
+                    <Scatter 
+                      name="Your Portfolio" 
+                      data={[yourPortfolioPoint]} 
+                      fill="#0000ff"
+                      shape="circle"
+                    >
+                      {/* Make the point larger */}
+                      {<cell width={20} height={20} />}
+                    </Scatter>
+                  )}
+                </ScatterChart>
+              </ResponsiveContainer>
+            </Box>
+            
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 3 }}>
+              This chart illustrates your portfolio's position relative to the efficient frontier. The efficient frontier represents the set of optimal portfolios that offer the highest expected return for a defined level of risk.
             </Typography>
           </Box>
         )}
@@ -507,6 +741,73 @@ const PortfolioResults = ({ results, onReset }) => {
                 </Typography>
               </Grid>
             </Grid>
+          </Box>
+        )}
+        
+        {/* Methodology Tab */}
+        {tabValue === 4 && (
+          <Box sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Portfolio Construction Methodology
+            </Typography>
+            
+            <Typography variant="subtitle1" gutterBottom>
+              Mean-Variance Optimization
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Your portfolio is constructed using Harry Markowitz's Nobel Prize-winning Modern Portfolio Theory.
+              This approach optimizes the trade-off between expected return and risk (measured by variance).
+            </Typography>
+            
+            <Typography variant="subtitle1" gutterBottom>
+              Efficient Frontier
+            </Typography>
+            <Typography variant="body1" paragraph>
+              The efficient frontier represents the set of optimal portfolios that offer the highest 
+              expected return for a defined level of risk. Your portfolio lies on this frontier,
+              optimized for your personal risk tolerance level of {results.risk_assessment.risk_aversion}.
+            </Typography>
+            
+            <Typography variant="subtitle1" gutterBottom>
+              Utility Function
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Your portfolio maximizes the utility function U = E(r) - (A/2) * σ², where:
+              <br/>• E(r) is the expected return
+              <br/>• σ² is the variance (risk)
+              <br/>• A is your risk aversion parameter ({results.risk_assessment.risk_aversion})
+            </Typography>
+            
+            <Typography variant="subtitle1" gutterBottom>
+              Key Portfolio Points
+            </Typography>
+            <Typography variant="body1">
+              • Global Minimum Variance Portfolio: The portfolio with the lowest possible risk
+              <br/>• Market Portfolio: The optimal portfolio according to the Capital Asset Pricing Model
+              <br/>• Your Portfolio: Optimized based on your specific risk tolerance level of {results.risk_assessment.risk_aversion.toFixed(1)}
+            </Typography>
+            
+            <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+              Mathematical Implementation
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Our implementation includes these key steps:
+              <br/>• Calculate historical returns and covariance matrix for all funds
+              <br/>• Identify the efficient frontier through quadratic optimization
+              <br/>• Find the Global Minimum Variance Portfolio (GMVP)
+              <br/>• Calculate the Market Portfolio (maximum Sharpe ratio)
+              <br/>• Determine the optimal portfolio for your risk aversion parameter
+            </Typography>
+            
+            <Typography variant="subtitle1" gutterBottom>
+              Portfolio Constraints
+            </Typography>
+            <Typography variant="body1">
+              Your portfolio is optimized with these constraints:
+              <br/>• Sum of weights equals 100%
+              <br/>• No short-selling (all positions are positive)
+              <br/>• Minimum allocation threshold of 1% to avoid tiny positions
+            </Typography>
           </Box>
         )}
       </Paper>

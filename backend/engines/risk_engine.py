@@ -70,28 +70,47 @@ class WeightedScoreRiskEngine(RiskEngine):
         """
         with open(config_path, 'r') as f:
             self.config = json.load(f)
+   
     
-    def assess_risk(self, responses: List[int]) -> Tuple[str, float]:
+    def assess_risk(self, responses: Dict[str, int]) -> Tuple[str, float]:
         """
-        Weighted scoring-based risk assessment.
+        Assess risk profile based on the notebook's implementation.
         
         Args:
-            responses: List of integer responses from the questionnaire
-            
+            responses: Dict with question IDs as keys and response scores (1-5) as values
+        
         Returns:
             Tuple of (risk_profile_name, risk_aversion_parameter)
         """
-        # Apply weights to each question response
-        weights = self.config["question_weights"]
-        weighted_score = sum(r * w for r, w in zip(responses, weights))
+        # Extract all response scores
+        scores = list(responses.values())
         
-        # Find the appropriate risk profile based on weighted score ranges
-        for profile in self.config["profiles"]:
-            if weighted_score >= profile["min_score"] and weighted_score <= profile["max_score"]:
-                return profile["name"], profile["risk_aversion"]
+        # Calculate total score (sum of all response scores)
+        total_score = sum(scores)
         
-        # Default to most conservative if no match
-        return self.config["profiles"][0]["name"], self.config["profiles"][0]["risk_aversion"]
+        # Calculate the final risk score (inverted) - matching the notebook's logic
+        # For a 16-question survey with scores 1-5, max total is 80, min is 16
+        final_score = 96 - total_score
+        
+        # Determine risk profile and risk aversion based on final score
+        # Using exact thresholds from the notebook
+        if final_score >= 76:
+            risk_profile = "Aggressive"
+            risk_aversion = 1.5
+        elif final_score >= 61:
+            risk_profile = "Growth-Oriented"
+            risk_aversion = 2.5
+        elif final_score >= 46:
+            risk_profile = "Moderate"
+            risk_aversion = 3.5
+        elif final_score >= 31:
+            risk_profile = "Conservative"
+            risk_aversion = 6.0
+        else:
+            risk_profile = "Very Conservative"
+            risk_aversion = 12.0
+            
+        return risk_profile, risk_aversion
 
 
 class SectionBasedRiskEngine(RiskEngine):

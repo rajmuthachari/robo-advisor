@@ -3,7 +3,10 @@ API Routes - Flask API endpoints for the robo-advisor.
 """
 from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 import json
+
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Any
@@ -194,7 +197,8 @@ def get_risk_profiles():
 
 @api.route('/complete', methods=['POST'])
 def complete_assessment():
-    """Complete the full assessment process."""
+    """ Complete the full assessment process using the 16-question assessment from the notebook."""
+
     data = request.json
     
     if not data or 'responses' not in data:

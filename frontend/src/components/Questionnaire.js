@@ -22,7 +22,11 @@ import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 
 // Configuration
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+//const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000/api';
+//const API_URL = process.env.REACT_APP_API_URL || '/api';
+// Setting axios defaults to help with potential issues
+axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 // Styled components
 const QuestionCard = styled(Card)(({ theme }) => ({
@@ -71,14 +75,31 @@ const Questionnaire = ({ onComplete }) => {
   const [responses, setResponses] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sections, setSections] = useState([]);
 
   // Fetch questionnaire data
   useEffect(() => {
     const fetchQuestionnaire = async () => {
       try {
         setLoading(true);
+        // Add debugging logs
+        console.log('Fetching questionnaire from:', `${API_URL}/questionnaire`);
+        
         const response = await axios.get(`${API_URL}/questionnaire`);
+        console.log('Received questionnaire response:', response);
+        
+        // Set the questionnaire data from the API response
         setQuestionnaire(response.data);
+        console.log('Questionnaire data set:', response.data);
+        
+        // Group questions by section
+        const sectionList = response.data.sections.map(section => ({
+          ...section,
+          questions: response.data.questions.filter(q => q.section === section.id)
+        }));
+        console.log('Grouped sections:', sectionList);
+        
+        setSections(sectionList);
         
         // Initialize responses object
         const initialResponses = {};
@@ -89,29 +110,94 @@ const Questionnaire = ({ onComplete }) => {
         
         setLoading(false);
       } catch (err) {
-        setError('Failed to load questionnaire. Please try again later.');
+        console.error('Error details:', err);
+        // More detailed error message
+        let errorMessage = 'Failed to load questionnaire. Please try again later.';
+        if (err.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          errorMessage += ` Server responded with status ${err.response.status}.`;
+          console.error('Response data:', err.response.data);
+        } else if (err.request) {
+          // The request was made but no response was received
+          errorMessage += ' No response received from server.';
+          console.error('Request made but no response:', err.request);
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          errorMessage += ` Error message: ${err.message}`;
+        }
+        setError(errorMessage);
         setLoading(false);
-        console.error('Error fetching questionnaire:', err);
+        
+        // Optionally, fall back to mock data during debugging
+        /*
+        console.log('Using mock data as fallback');
+        const mockQuestionnaire = {
+          id: "default_questionnaire",
+          title: "Investment Risk Assessment",
+          description: "This questionnaire will help us understand your investment goals and risk tolerance to create a personalized portfolio recommendation.",
+          sections: [
+            {
+              id: "demographics",
+              title: "Demographics & Time Horizon",
+              description: "Understanding your personal situation helps us determine suitable investment strategies.",
+              weight: 1.0
+            },
+            {
+              id: "financial",
+              title: "Financial Situation",
+              description: "Your current financial position affects how much risk is appropriate for you.",
+              weight: 1.0
+            },
+            {
+              id: "behavior",
+              title: "Investment Behavior & Reactions",
+              description: "How you react to market fluctuations is an important factor in determining your risk profile.",
+              weight: 1.5
+            },
+            {
+              id: "philosophy",
+              title: "Investment Philosophy & Objectives",
+              description: "Your personal investment approach and goals guide our recommendations.",
+              weight: 1.3
+            },
+            {
+              id: "scenarios",
+              title: "Hypothetical Scenarios",
+              description: "These scenarios help us gauge your risk tolerance in concrete situations.",
+              weight: 1.2
+            }
+          ],
+          questions: [
+            // Add questions here if needed as a fallback
+          ]
+        };
+        
+        setQuestionnaire(mockQuestionnaire);
+        
+        // Group questions by section
+        const sectionList = mockQuestionnaire.sections.map(section => ({
+          ...section,
+          questions: mockQuestionnaire.questions.filter(q => q.section === section.id)
+        }));
+        
+        setSections(sectionList);
+        
+        // Initialize responses object
+        const initialResponses = {};
+        mockQuestionnaire.questions.forEach(q => {
+          initialResponses[q.id] = null;
+        });
+        setResponses(initialResponses);
+        
+        setLoading(false);
+        */
       }
     };
 
     fetchQuestionnaire();
   }, []);
 
-  // Group questions by section
-  const getQuestionsBySection = () => {
-    if (!questionnaire) return [];
-    
-    const sections = questionnaire.sections.map(section => ({
-      ...section,
-      questions: questionnaire.questions.filter(q => q.section === section.id)
-    }));
-    
-    return sections;
-  };
-
-  const sections = getQuestionsBySection();
-  
   // Get current section questions
   const getCurrentSectionQuestions = () => {
     if (sections.length === 0) return [];
@@ -120,6 +206,7 @@ const Questionnaire = ({ onComplete }) => {
 
   // Handle option selection
   const handleOptionSelect = (questionId, value) => {
+    console.log('Selected option:', questionId, value);
     setResponses({
       ...responses,
       [questionId]: value
@@ -159,37 +246,44 @@ const Questionnaire = ({ onComplete }) => {
   const submitQuestionnaire = async () => {
     try {
       setLoading(true);
+      console.log('Submitting responses:', responses);
       
-      // Convert responses object to array of scores
-      const responseScores = Object.keys(responses).map(questionId => {
-        return responses[questionId];
-      });
-      
-      // Submit to API
+      // Call the actual API endpoint
       const response = await axios.post(`${API_URL}/complete`, {
-        responses: responseScores
+        responses: responses
       });
+      console.log('Received submission response:', response);
       
-      // Call onComplete with results
+      // Call onComplete with the actual results
       onComplete(response.data);
       
       setLoading(false);
     } catch (err) {
-      setError('Failed to submit your responses. Please try again later.');
-      setLoading(false);
       console.error('Error submitting questionnaire:', err);
+      let errorMessage = 'Failed to submit your responses. Please try again later.';
+      if (err.response) {
+        errorMessage += ` Server responded with status ${err.response.status}.`;
+        console.error('Response data:', err.response.data);
+      } else if (err.request) {
+        errorMessage += ' No response received from server.';
+        console.error('Request made but no response:', err.request);
+      } else {
+        errorMessage += ` Error message: ${err.message}`;
+      }
+      setError(errorMessage);
+      setLoading(false);
     }
   };
 
   // Check if current question is answered
   const isCurrentQuestionAnswered = () => {
-    if (!questionnaire) return false;
+    if (!questionnaire || sections.length === 0) return false;
     
     const sectionQuestions = getCurrentSectionQuestions();
     if (sectionQuestions.length === 0) return false;
     
-    const currentQuestionId = sectionQuestions[currentQuestion].id;
-    return responses[currentQuestionId] !== null;
+    const currentQuestionId = sectionQuestions[currentQuestion]?.id;
+    return responses[currentQuestionId] !== null && responses[currentQuestionId] !== undefined;
   };
 
   // Loading state
@@ -317,15 +411,6 @@ const Questionnaire = ({ onComplete }) => {
               >
                 Back
               </NavigationButton>
-            </Box>
-          </>
-        )}
-      </Box>
-    </Container>
-  );
-};
-
-export default Questionnaire;
               
               <NavigationButton
                 variant="contained"
@@ -336,3 +421,12 @@ export default Questionnaire;
                 {currentSection === sections.length - 1 && currentQuestion === getCurrentSectionQuestions().length - 1 ? 'Submit' : 'Next'}
                 {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
               </NavigationButton>
+            </Box>
+          </>
+        )}
+      </Box>
+    </Container>
+  );
+};
+
+export default Questionnaire;

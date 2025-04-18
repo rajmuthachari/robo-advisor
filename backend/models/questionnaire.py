@@ -1,338 +1,299 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Stepper, 
-  Step, 
-  StepLabel, 
-  Typography, 
-  Button, 
-  Card, 
-  CardContent, 
-  Radio, 
-  RadioGroup,
-  FormControlLabel,
-  FormControl, 
-  CircularProgress, 
-  Paper,
-  Container,
-  Grid
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material';
-import axios from 'axios';
+"""
+Questionnaire Model - Defines the structure for risk assessment questionnaires.
+"""
+import json
+from typing import Dict, List, Tuple, Any, Optional
 
-// Configuration
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Styled components
-const QuestionCard = styled(Card)(({ theme }) => ({
-  marginTop: theme.spacing(4),
-  marginBottom: theme.spacing(4),
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-  borderRadius: theme.spacing(2),
-  transition: 'transform 0.3s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-  },
-}));
-
-const OptionButton = styled(FormControlLabel)(({ theme, selected }) => ({
-  width: '100%',
-  margin: theme.spacing(1, 0),
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(1),
-  border: selected ? `2px solid ${theme.palette.primary.main}` : '1px solid #e0e0e0',
-  backgroundColor: selected ? 'rgba(63, 81, 181, 0.08)' : 'white',
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    backgroundColor: selected ? 'rgba(63, 81, 181, 0.12)' : 'rgba(0, 0, 0, 0.04)',
-    transform: 'scale(1.01)',
-  },
-}));
-
-const NavigationButton = styled(Button)(({ theme }) => ({
-  margin: theme.spacing(1),
-  padding: theme.spacing(1, 3),
-  borderRadius: theme.spacing(3),
-}));
-
-const SectionHeading = styled(Typography)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  color: theme.palette.primary.main,
-  fontWeight: 600,
-}));
-
-// Main Questionnaire Component
-const Questionnaire = ({ onComplete }) => {
-  const [questionnaire, setQuestionnaire] = useState(null);
-  const [currentSection, setCurrentSection] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [responses, setResponses] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Fetch questionnaire data
-  useEffect(() => {
-    const fetchQuestionnaire = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${API_URL}/questionnaire`);
-        setQuestionnaire(response.data);
+class Question:
+    """Represents a single question in the questionnaire."""
+    
+    def __init__(self, id: str, text: str, options: List[Dict[str, Any]], section: str = None):
+        """
+        Initialize a question.
         
-        // Initialize responses object
-        const initialResponses = {};
-        response.data.questions.forEach(q => {
-          initialResponses[q.id] = null;
-        });
-        setResponses(initialResponses);
+        Args:
+            id: Unique identifier for the question
+            text: The question text
+            options: List of options, each with text and score
+            section: Optional section this question belongs to
+        """
+        self.id = id
+        self.text = text
+        self.options = options
+        self.section = section
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "id": self.id,
+            "text": self.text,
+            "options": self.options,
+            "section": self.section
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Question':
+        """Create from dictionary representation."""
+        return cls(
+            id=data["id"],
+            text=data["text"],
+            options=data["options"],
+            section=data.get("section")
+        )
+
+
+class Section:
+    """Represents a section of questions in the questionnaire."""
+    
+    def __init__(self, id: str, title: str, description: str = None, weight: float = 1.0):
+        """
+        Initialize a section.
         
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load questionnaire. Please try again later.');
-        setLoading(false);
-        console.error('Error fetching questionnaire:', err);
-      }
-    };
-
-    fetchQuestionnaire();
-  }, []);
-
-  // Group questions by section
-  const getQuestionsBySection = () => {
-    if (!questionnaire) return [];
+        Args:
+            id: Unique identifier for the section
+            title: The section title
+            description: Optional description of the section
+            weight: Weight of this section in the overall assessment
+        """
+        self.id = id
+        self.title = title
+        self.description = description
+        self.weight = weight
     
-    const sections = questionnaire.sections.map(section => ({
-      ...section,
-      questions: questionnaire.questions.filter(q => q.section === section.id)
-    }));
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "weight": self.weight
+        }
     
-    return sections;
-  };
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Section':
+        """Create from dictionary representation."""
+        return cls(
+            id=data["id"],
+            title=data["title"],
+            description=data.get("description"),
+            weight=data.get("weight", 1.0)
+        )
 
-  const sections = getQuestionsBySection();
-  
-  // Get current section questions
-  const getCurrentSectionQuestions = () => {
-    if (sections.length === 0) return [];
-    return sections[currentSection].questions;
-  };
 
-  // Handle option selection
-  const handleOptionSelect = (questionId, value) => {
-    setResponses({
-      ...responses,
-      [questionId]: value
-    });
-  };
-
-  // Navigation handlers
-  const handleNext = () => {
-    const sectionQuestions = getCurrentSectionQuestions();
+class Questionnaire:
+    """Represents a complete risk assessment questionnaire."""
     
-    if (currentQuestion < sectionQuestions.length - 1) {
-      // Move to next question in section
-      setCurrentQuestion(currentQuestion + 1);
-    } else if (currentSection < sections.length - 1) {
-      // Move to next section
-      setCurrentSection(currentSection + 1);
-      setCurrentQuestion(0);
-    } else {
-      // Questionnaire complete
-      submitQuestionnaire();
-    }
-  };
-
-  const handleBack = () => {
-    if (currentQuestion > 0) {
-      // Move to previous question in section
-      setCurrentQuestion(currentQuestion - 1);
-    } else if (currentSection > 0) {
-      // Move to last question of previous section
-      setCurrentSection(currentSection - 1);
-      const prevSectionQuestions = sections[currentSection - 1].questions;
-      setCurrentQuestion(prevSectionQuestions.length - 1);
-    }
-  };
-
-  // Submit questionnaire
-  const submitQuestionnaire = async () => {
-    try {
-      setLoading(true);
-      
-      // Convert responses object to array of scores
-      const responseScores = Object.keys(responses).map(questionId => {
-        return responses[questionId];
-      });
-      
-      // Submit to API
-      const response = await axios.post(`${API_URL}/complete`, {
-        responses: responseScores
-      });
-      
-      // Call onComplete with results
-      onComplete(response.data);
-      
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to submit your responses. Please try again later.');
-      setLoading(false);
-      console.error('Error submitting questionnaire:', err);
-    }
-  };
-
-  // Check if current question is answered
-  const isCurrentQuestionAnswered = () => {
-    if (!questionnaire) return false;
-    
-    const sectionQuestions = getCurrentSectionQuestions();
-    if (sectionQuestions.length === 0) return false;
-    
-    const currentQuestionId = sectionQuestions[currentQuestion].id;
-    return responses[currentQuestionId] !== null;
-  };
-
-  // Loading state
-  if (loading && !questionnaire) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <Paper elevation={3} sx={{ p: 4, maxWidth: 500, textAlign: 'center' }}>
-          <Typography variant="h5" color="error" gutterBottom>
-            Error
-          </Typography>
-          <Typography>{error}</Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            sx={{ mt: 3 }}
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
-        </Paper>
-      </Box>
-    );
-  }
-
-  // No questionnaire data
-  if (!questionnaire) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <Typography>No questionnaire available.</Typography>
-      </Box>
-    );
-  }
-
-  // Render the questionnaire
-  return (
-    <Container maxWidth="md">
-      <Box sx={{ width: '100%', my: 4 }}>
-        {/* Questionnaire Header */}
-        <Typography variant="h4" align="center" gutterBottom>
-          {questionnaire.title}
-        </Typography>
+    def __init__(self, id: str, title: str, description: str = None, 
+                sections: List[Section] = None, questions: List[Question] = None):
+        """
+        Initialize a questionnaire.
         
-        {questionnaire.description && (
-          <Typography variant="body1" align="center" color="textSecondary" paragraph>
-            {questionnaire.description}
-          </Typography>
-        )}
+        Args:
+            id: Unique identifier for the questionnaire
+            title: The questionnaire title
+            description: Optional description of the questionnaire
+            sections: List of sections
+            questions: List of questions
+        """
+        self.id = id
+        self.title = title
+        self.description = description
+        self.sections = sections or []
+        self.questions = questions or []
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "sections": [section.to_dict() for section in self.sections],
+            "questions": [question.to_dict() for question in self.questions]
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Questionnaire':
+        """Create from dictionary representation."""
+        return cls(
+            id=data["id"],
+            title=data["title"],
+            description=data.get("description"),
+            sections=[Section.from_dict(section) for section in data.get("sections", [])],
+            questions=[Question.from_dict(question) for question in data.get("questions", [])]
+        )
+    
+    @classmethod
+    def load_from_file(cls, file_path: str) -> 'Questionnaire':
+        """Load questionnaire from a JSON file."""
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+    
+    def save_to_file(self, file_path: str) -> None:
+        """Save questionnaire to a JSON file."""
+        with open(file_path, 'w') as f:
+            json.dump(self.to_dict(), f, indent=2)
+    
+    def get_questions_by_section(self, section_id: str) -> List[Question]:
+        """Get all questions in a section."""
+        return [q for q in self.questions if q.section == section_id]
+    
+    def get_section_by_id(self, section_id: str) -> Optional[Section]:
+        """Get a section by its ID."""
+        for section in self.sections:
+            if section.id == section_id:
+                return section
+        return None
+    
+    def get_question_by_id(self, question_id: str) -> Optional[Question]:
+        """Get a question by its ID."""
+        for question in self.questions:
+            if question.id == question_id:
+                return question
+        return None
 
-        {/* Progress Stepper */}
-        <Stepper activeStep={currentSection} alternativeLabel sx={{ mt: 4, mb: 2 }}>
-          {sections.map((section) => (
-            <Step key={section.id}>
-              <StepLabel>{section.title}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
 
-        {/* Current Section */}
-        {sections.length > 0 && (
-          <>
-            <SectionHeading variant="h5">
-              {sections[currentSection].title}
-            </SectionHeading>
-            
-            {sections[currentSection].description && (
-              <Typography variant="body2" color="textSecondary" paragraph>
-                {sections[currentSection].description}
-              </Typography>
-            )}
-
-            {/* Current Question */}
-            {getCurrentSectionQuestions().length > 0 && (
-              <QuestionCard>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Question {currentQuestion + 1} of {getCurrentSectionQuestions().length}
-                  </Typography>
-                  
-                  <Typography variant="h5" paragraph>
-                    {getCurrentSectionQuestions()[currentQuestion].text}
-                  </Typography>
-                  
-                  <FormControl component="fieldset" fullWidth>
-                    <RadioGroup
-                      value={responses[getCurrentSectionQuestions()[currentQuestion].id] || ''}
-                      onChange={(e) => handleOptionSelect(
-                        getCurrentSectionQuestions()[currentQuestion].id, 
-                        parseInt(e.target.value)
-                      )}
-                    >
-                      <Grid container spacing={2}>
-                        {getCurrentSectionQuestions()[currentQuestion].options.map((option, index) => (
-                          <Grid item xs={12} key={index}>
-                            <OptionButton
-                              value={option.score}
-                              control={<Radio color="primary" />}
-                              label={option.text}
-                              selected={responses[getCurrentSectionQuestions()[currentQuestion].id] === option.score}
-                            />
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </RadioGroup>
-                  </FormControl>
-                </CardContent>
-              </QuestionCard>
-            )}
-
-            {/* Navigation Buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-              <NavigationButton
-                variant="outlined"
-                startIcon={<ArrowBack />}
-                onClick={handleBack}
-                disabled={currentSection === 0 && currentQuestion === 0}
-              >
-                Back
-              </NavigationButton>
-            </Box>
-          </>
-        )}
-      </Box>
-    </Container>
-  );
-};
-
-export default Questionnaire;
-              
-              <NavigationButton
-                variant="contained"
-                endIcon={currentSection === sections.length - 1 && currentQuestion === getCurrentSectionQuestions().length - 1 ? <CheckCircle /> : <ArrowForward />}
-                onClick={handleNext}
-                disabled={!isCurrentQuestionAnswered() || loading}
-              >
-                {currentSection === sections.length - 1 && currentQuestion === getCurrentSectionQuestions().length - 1 ? 'Submit' : 'Next'}
-                {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
-              </NavigationButton>
+def create_sample_questionnaire(type_name: str = "simple") -> Questionnaire:
+    """
+    Create a sample questionnaire of the specified type.
+    
+    Args:
+        type_name: Type of questionnaire to create ("simple", "detailed", "section_based")
+        
+    Returns:
+        Sample Questionnaire instance
+    """
+    if type_name == "simple":
+        # Create a simple 10-question questionnaire
+        sections = [
+            Section(id="goals", title="Financial Goals & Time Horizon", weight=1.2),
+            Section(id="situation", title="Financial Situation", weight=1.0),
+            Section(id="capacity", title="Risk Capacity", weight=1.5),
+            Section(id="attitude", title="Risk Attitude", weight=1.8),
+            Section(id="experience", title="Investment Experience & Preferences", weight=1.0)
+        ]
+        
+        questions = [
+            Question(
+                id="q1",
+                text="What is your primary investment objective?",
+                options=[
+                    {"text": "Preserve my capital", "score": 1},
+                    {"text": "Grow my capital steadily over time", "score": 2},
+                    {"text": "Maximize long-term returns, accepting short-term risk", "score": 3}
+                ],
+                section="goals"
+            ),
+            Question(
+                id="q2",
+                text="When do you expect to start withdrawing a significant portion of this investment?",
+                options=[
+                    {"text": "Within 3 years", "score": 1},
+                    {"text": "Between 3 and 7 years", "score": 2},
+                    {"text": "After 7 years", "score": 3}
+                ],
+                section="goals"
+            ),
+            Question(
+                id="q3",
+                text="How would you describe your household income stability?",
+                options=[
+                    {"text": "Unstable or fluctuating", "score": 1},
+                    {"text": "Mostly stable", "score": 2},
+                    {"text": "Very stable and predictable", "score": 3}
+                ],
+                section="situation"
+            ),
+            Question(
+                id="q4",
+                text="Do you have a financial safety net (e.g., emergency fund, insurance)?",
+                options=[
+                    {"text": "Not at all", "score": 1},
+                    {"text": "Partially", "score": 2},
+                    {"text": "Fully covered", "score": 3}
+                ],
+                section="situation"
+            ),
+            Question(
+                id="q5",
+                text="How would you react if your portfolio lost 15% in six months?",
+                options=[
+                    {"text": "Sell immediately to avoid further losses", "score": 1},
+                    {"text": "Hold and wait for recovery", "score": 2},
+                    {"text": "Buy more to take advantage of lower prices", "score": 3}
+                ],
+                section="capacity"
+            ),
+            Question(
+                id="q6",
+                text="What is the maximum annual loss you could tolerate without changing your investment plan?",
+                options=[
+                    {"text": "10% or less", "score": 1},
+                    {"text": "Around 25%", "score": 2},
+                    {"text": "40% or more", "score": 3}
+                ],
+                section="capacity"
+            ),
+            Question(
+                id="q7",
+                text="When markets are volatile, what is your typical reaction?",
+                options=[
+                    {"text": "I panic and withdraw funds", "score": 1},
+                    {"text": "I monitor closely but avoid changing plans", "score": 2},
+                    {"text": "I stay calm or see it as an opportunity", "score": 3}
+                ],
+                section="attitude"
+            ),
+            Question(
+                id="q8",
+                text="How do you feel about investment risk?",
+                options=[
+                    {"text": "I avoid it as much as possible", "score": 1},
+                    {"text": "I can handle some risk for moderate returns", "score": 2},
+                    {"text": "I am comfortable with high risk for high potential returns", "score": 3}
+                ],
+                section="attitude"
+            ),
+            Question(
+                id="q9",
+                text="Which investments have you used before?",
+                options=[
+                    {"text": "Only savings, fixed deposits, or insurance", "score": 1},
+                    {"text": "Bonds, balanced funds, or REITs", "score": 2},
+                    {"text": "Stocks, ETFs, crypto, or derivatives", "score": 3}
+                ],
+                section="experience"
+            ),
+            Question(
+                id="q10",
+                text="How actively do you manage your investments?",
+                options=[
+                    {"text": "I rarely review or adjust them", "score": 1},
+                    {"text": "I occasionally monitor and rebalance", "score": 2},
+                    {"text": "I actively manage and adjust strategies", "score": 3}
+                ],
+                section="experience"
+            )
+        ]
+        
+        return Questionnaire(
+            id="simple_risk_assessment",
+            title="Risk Tolerance Assessment",
+            description="This questionnaire will help us understand your risk tolerance and investment goals.",
+            sections=sections,
+            questions=questions
+        )
+    
+    elif type_name == "detailed":
+        # Create a more detailed questionnaire (16 questions)
+        # Implementation left for future enhancement
+        pass
+    
+    elif type_name == "section_based":
+        # Create a section-based questionnaire
+        # Implementation left for future enhancement
+        pass
+    
+    else:
+        raise ValueError(f"Unknown questionnaire type: {type_name}")
